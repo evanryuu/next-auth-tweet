@@ -1,0 +1,99 @@
+diff --git a/core/lib/oauth/client.js b/core/lib/oauth/client.js
+index c2f0d40e6bbbdc2eaebddb4c19b8358c22837ef7..067635eb00238a5dc80e7823a90faa7fe70a2a92 100644
+--- a/core/lib/oauth/client.js
++++ b/core/lib/oauth/client.js
+@@ -1,37 +1,56 @@
+-"use strict";
++'use strict'
+ 
+-Object.defineProperty(exports, "__esModule", {
+-  value: true
+-});
+-exports.openidClient = openidClient;
++Object.defineProperty(exports, '__esModule', {
++  value: true,
++})
++exports.openidClient = openidClient
+ 
+-var _openidClient = require("openid-client");
++var _openidClient = require('openid-client')
++
++var { HttpsProxyAgent } = require('https-proxy-agent')
+ 
+ async function openidClient(options) {
+-  const provider = options.provider;
+-  if (provider.httpOptions) _openidClient.custom.setHttpOptionsDefaults(provider.httpOptions);
+-  let issuer;
++  const provider = options.provider
++
++  let httpOptions = {}
++  if (provider.httpOptions) httpOptions = { ...provider.httpOptions }
++  if (process.env.http_proxy) {
++    let agent = new HttpsProxyAgent(process.env.http_proxy)
++    httpOptions.agent = agent
++  }
++  _openidClient.custom.setHttpOptionsDefaults(httpOptions)
+ 
++  let issuer
+   if (provider.wellKnown) {
+-    issuer = await _openidClient.Issuer.discover(provider.wellKnown);
++    issuer = await _openidClient.Issuer.discover(provider.wellKnown)
+   } else {
+-    var _provider$authorizati, _provider$token, _provider$userinfo;
++    var _provider$authorizati, _provider$token, _provider$userinfo
+ 
+     issuer = new _openidClient.Issuer({
+       issuer: provider.issuer,
+-      authorization_endpoint: (_provider$authorizati = provider.authorization) === null || _provider$authorizati === void 0 ? void 0 : _provider$authorizati.url,
+-      token_endpoint: (_provider$token = provider.token) === null || _provider$token === void 0 ? void 0 : _provider$token.url,
+-      userinfo_endpoint: (_provider$userinfo = provider.userinfo) === null || _provider$userinfo === void 0 ? void 0 : _provider$userinfo.url,
+-      jwks_uri: provider.jwks_endpoint
+-    });
++      authorization_endpoint:
++        (_provider$authorizati = provider.authorization) === null || _provider$authorizati === void 0
++          ? void 0
++          : _provider$authorizati.url,
++      token_endpoint:
++        (_provider$token = provider.token) === null || _provider$token === void 0 ? void 0 : _provider$token.url,
++      userinfo_endpoint:
++        (_provider$userinfo = provider.userinfo) === null || _provider$userinfo === void 0
++          ? void 0
++          : _provider$userinfo.url,
++      jwks_uri: provider.jwks_endpoint,
++    })
+   }
+ 
+-  const client = new issuer.Client({
+-    client_id: provider.clientId,
+-    client_secret: provider.clientSecret,
+-    redirect_uris: [provider.callbackUrl],
+-    ...provider.client
+-  }, provider.jwks);
+-  client[_openidClient.custom.clock_tolerance] = 10;
+-  return client;
++  const client = new issuer.Client(
++    {
++      client_id: provider.clientId,
++      client_secret: provider.clientSecret,
++      redirect_uris: [provider.callbackUrl],
++      ...provider.client,
++    },
++    provider.jwks
++  )
++  client[_openidClient.custom.clock_tolerance] = 10
++  return client
+ }
+diff --git a/package.json b/package.json
+index c89e03c41a03de738cfb0ad090a63c2e99dadc7b..1c382d3371df26c0b25876ecafca88e69fce8e22 100644
+--- a/package.json
++++ b/package.json
+@@ -83,7 +83,8 @@
+     "openid-client": "^5.4.0",
+     "preact": "^10.6.3",
+     "preact-render-to-string": "^5.1.19",
+-    "uuid": "^8.3.2"
++    "uuid": "^8.3.2",
++    "https-proxy-agent": "^7.0.4"
+   },
+   "peerDependencies": {
+     "next": "^12.2.5 || ^13 || ^14",

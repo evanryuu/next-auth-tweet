@@ -1,0 +1,25 @@
+import { NextResponse } from 'next/server'
+import { authOptions } from './authOptions'
+import { getServerSession } from 'next-auth/next'
+
+async function handler(req, res) {
+  const session = await getServerSession(
+    req,
+    {
+      ...res,
+      getHeader: (name: string) => res.headers?.get(name),
+      setHeader: (name: string, value: string) => res.headers?.set(name, value),
+    },
+    authOptions
+  )
+
+  if (!session) {
+    return NextResponse.json({ message: 'You must be logged in.' }, { status: 401 })
+  }
+
+  return NextResponse.json({
+    message: 'Success',
+  })
+}
+
+export { handler as GET, handler as POST }
